@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: to_do_db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: to_do
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - my_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: to_do_backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    env_file:
+      - ./backend/.env
+    networks:
+      - my_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: to_do_frontend
+    restart: unless-stopped
+    ports:
+      - "8888:3000"  # Залишено для доступу з хоста на 8888
+    volumes:
+      - ./frontend:/app  # Додано для синхронізації коду
+      - /app/node_modules  # Виключаємо node_modules
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://backend:3000
+      NODE_ENV: development  # Додано для режиму розробки
+    networks:
+      - my_network
+
+volumes:
+  postgres_data:
+
+networks:
+  my_network:
+    driver: bridge
