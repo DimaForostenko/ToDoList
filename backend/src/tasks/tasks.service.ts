@@ -1,57 +1,73 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { UsersService } from '..//user/users.service';
 
 @Injectable()
 export class TasksService {
-  private readonly logger = new Logger(TasksService.name);
-
   constructor(
     @InjectRepository(Task)
     private tasksRepository: Repository<Task>,
+    private readonly usersService: UsersService,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
+  async create(createTaskDto: CreateTaskDto, userId: number): Promise<Task> {
+    const user = await this.usersService.findById(userId);
     const task = this.tasksRepository.create({
       ...createTaskDto,
       completed: createTaskDto.completed ?? false,
+      user,
     });
-    return this.tasksRepository.save(task);
+    const savedTask = await this.tasksRepository.save(task);
+    // Виключаємо пароль із відповіді
+    delete savedTask.user.password;
+    return savedTask;
   }
 
-  async findAll(): Promise<Task[]> {
-    this.logger.log('Fetching all tasks');
-    return this.tasksRepository.find();
+  async findAll(userId: number): Promise<Task[]> {
+    const tasks = await this.tasksRepository.find({
+      where: { user: { id: userId } },
+      relations: ['user'], // Завантажуємо користувача
+    });
+    // Виключаємо пароль із кожної задачі
+    return tasks.map(task => {
+      delete task.user.password;
+      return task;
+    });
   }
-
-  async findOne(id: number): Promise<Task> {
-    this.logger.log(`Fetching task with ID ${id}`);
-    const task = await this.tasksRepository.findOneBy({ id });
+  async findOne(id: number, userId: number): Promise<Task> {
+    const task = await this.tasksRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user'], // Завантажуємо користувача
+    });
     if (!task) {
-      this.logger.warn(`Task with ID ${id} not found`);
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
+    // Виключаємо пароль
+    delete task.user.password;
     return task;
   }
 
-  async update(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
-    this.logger.log(`Updating task with ID ${id}`);
-    const task = await this.findOne(id);
-    if (!task) {
-      throw new NotFoundException(`Task with ID ${id} not found`);
-    } // Перевірка наявності завдання перед оновленням
+  async update(
+    id: number,
+    updateTaskDto: UpdateTaskDto,
+    userId: number,
+  ): Promise<Task> {
+    const task = await this.findOne(id, userId);
     await this.tasksRepository.update(id, updateTaskDto);
-    return this.tasksRepository.findOneBy({ id });
+    const updatedTask = await this.tasksRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
+    delete updatedTask.user.password;
+    return updatedTask;
   }
 
-  async remove(id: number): Promise<Task> {
-    this.logger.log(`Deleting task with ID ${id}`);
-    const task = await this.findOne(id);
+  async remove(id: number, userId: number): Promise<void> {
+    const Task = await this.findOne(id, userId);
     await this.tasksRepository.delete(id);
-    this.logger.log(`Task with ID ${id} deleted`);
-    return task;
   }
 }
