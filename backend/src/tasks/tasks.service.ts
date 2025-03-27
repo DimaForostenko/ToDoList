@@ -33,7 +33,7 @@ export class TasksService {
       relations: ['user'], // Завантажуємо користувача
     });
     // Виключаємо пароль із кожної задачі
-    return tasks.map(task => {
+    return tasks.map((task) => {
       delete task.user.password;
       return task;
     });
@@ -51,23 +51,15 @@ export class TasksService {
     return task;
   }
 
-  async update(
-    id: number,
-    updateTaskDto: UpdateTaskDto,
-    userId: number,
-  ): Promise<Task> {
-    const task = await this.findOne(id, userId);
-    await this.tasksRepository.update(id, updateTaskDto);
-    const updatedTask = await this.tasksRepository.findOne({
-      where: { id },
-      relations: ['user'],
-    });
-    delete updatedTask.user.password;
-    return updatedTask;
+  async update(id: number, updateTaskDto: UpdateTaskDto): Promise<Task> {
+    const task = await this.tasksRepository.findOne({ where: { id } });
+    if (!task) throw new NotFoundException(`Task with ID ${id} not found`);
+    Object.assign(task, updateTaskDto);
+    return this.tasksRepository.save(task);
   }
 
   async remove(id: number, userId: number): Promise<void> {
-    const Task = await this.findOne(id, userId);
-    await this.tasksRepository.delete(id);
+    await this.findOne(id, userId); // Перевірка, чи існує завдання
+    await this.tasksRepository.delete(id); // Видалення завдання
   }
 }

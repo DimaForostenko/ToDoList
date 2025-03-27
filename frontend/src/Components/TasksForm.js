@@ -1,57 +1,45 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { createTask } from '../redux/tasksSlice';
+import { addActivity } from '../redux/activitySlice';
 import "./TasksForm.style.css";
 
-const TasksForm = ({ onAddTask }) => {
+const TaskForm = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [error, setError] = useState('');
-  const token = localStorage.getItem('token');
-  const apiUrl = 'http://localhost:3000/tasks';
+  const dispatch = useDispatch();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      const response = await axios.post(
-        apiUrl,
-        { title, description },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      onAddTask(response.data);
-      setTitle('');
-      setDescription('');
-    } catch (err) {
-      setError('Failed to add task');
-    }
+    const newTask = { title, description };
+    dispatch(createTask(newTask));
+    dispatch(addActivity(`Task "${title}" created`));
+    setTitle('');
+    setDescription('');
   };
 
   return (
-    <form onSubmit={handleSubmit} className='form'>
+    <form onSubmit={handleSubmit} className="taskform">
       <input
         type="text"
         placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         required
-        style={styles.input}
+        className="taskform-input"
       />
       <input
         type="text"
         placeholder="Description"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        style={styles.input}
+        className="taskform-input"
       />
-      <button type="submit" style={styles.button}>
+      <button type="submit" className="taskform-button">
         Add Task
       </button>
-      {error && <p style={styles.error}>{error}</p>}
     </form>
   );
 };
 
-
-
-export default TasksForm;
+export default TaskForm;

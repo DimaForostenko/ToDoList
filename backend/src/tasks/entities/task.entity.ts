@@ -14,6 +14,9 @@ export class Task {
   @Column({ default: false })
   completed: boolean;
 
+  @Column({ nullable: true }) // Додаємо status
+  status?: string;
+
   @ManyToOne(() => User, (user) => user.tasks)
   user: User; // Завдання належить користувачу
 }
