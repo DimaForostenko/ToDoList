@@ -1,4 +1,11 @@
-import { IsOptional, IsString, IsBoolean } from 'class-validator';
+// backend/src/tasks/dto/update-task.dto.ts
+import {
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+} from 'class-validator';
 
 export class UpdateTaskDto {
   @IsOptional()
@@ -15,5 +22,13 @@ export class UpdateTaskDto {
 
   @IsOptional()
   @IsString()
-  status?: string; // Додаємо status
+  status?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsEnum(['low', 'middle', 'high'])
+  priority?: 'low' | 'middle' | 'high';
 }

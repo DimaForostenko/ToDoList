@@ -11,11 +11,11 @@ const TaskItem = ({ task, index }) => {
   const dispatch = useDispatch();
 
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: String(task.id), // Унікальний ідентифікатор завдання
+    id: String(task.id),
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform), // Перетворення для drag ефекту
+    transform: CSS.Translate.toString(transform),
     ...styles.taskItem,
   };
 
@@ -31,9 +31,12 @@ const TaskItem = ({ task, index }) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div ref={setNodeRef} style={style}>
+      <div style={styles.dragHandle} {...listeners} {...attributes}>
+        ⠿ {/* Іконка або символ для перетягування */}
+      </div>
       {isEditing ? (
-        <div>
+        <div style={styles.editContainer}>
           <input
             value={editedTask.title}
             onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
@@ -46,6 +49,21 @@ const TaskItem = ({ task, index }) => {
             }
             style={styles.input}
           />
+          <input
+            type="date"
+            value={editedTask.dueDate ? editedTask.dueDate.split('T')[0] : ''}
+            onChange={(e) => setEditedTask({ ...editedTask, dueDate: e.target.value })}
+            style={styles.input}
+          />
+          <select
+            value={editedTask.priority || 'middle'}
+            onChange={(e) => setEditedTask({ ...editedTask, priority: e.target.value })}
+            style={styles.input}
+          >
+            <option value="low">Low</option>
+            <option value="middle">Middle</option>
+            <option value="high">High</option>
+          </select>
           <button onClick={handleUpdate} style={styles.saveButton}>
             Save
           </button>
@@ -56,9 +74,11 @@ const TaskItem = ({ task, index }) => {
       ) : (
         <div style={styles.taskContent}>
           <span>
-            {task.title} - {task.description || 'No description'}
+            {task.title} - {task.description || 'No description'} <br />
+            Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'} <br />
+            Priority: {task.priority || 'middle'}
           </span>
-          <div>
+          <div style={styles.buttonContainer}>
             <button onClick={() => setIsEditing(true)} style={styles.editButton}>
               Edit
             </button>
@@ -79,16 +99,35 @@ const styles = {
     backgroundColor: '#fff',
     borderRadius: '4px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    display: 'flex',
+    alignItems: 'center',
+  },
+  dragHandle: {
+    width: '20px',
+    height: '20px',
+    cursor: 'grab',
+    marginRight: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   taskContent: {
+    flex: 1,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  editContainer: {
+    flex: 1,
   },
   input: {
     width: '100%',
     padding: '5px',
     margin: '5px 0',
+  },
+  buttonContainer: {
+    display: 'flex',
+    gap: '5px',
   },
   editButton: {
     padding: '5px',
@@ -105,7 +144,6 @@ const styles = {
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
-    marginLeft: '5px',
   },
   saveButton: {
     padding: '5px',

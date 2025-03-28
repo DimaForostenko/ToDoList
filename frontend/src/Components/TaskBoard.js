@@ -43,7 +43,7 @@ const TaskBoard = ({ onLogout }) => {
   const columns = {
     'To Do': tasks.filter((task) => task.status === 'To Do' || (!task.status && !task.completed)),
     'In Progress': tasks.filter((task) => task.status === 'In Progress'),
-    Done: tasks.filter((task) => task.status === 'Done' || task.completed === true),
+    'Done': tasks.filter((task) => task.status === 'Done' || task.completed === true),
   };
 
   return (

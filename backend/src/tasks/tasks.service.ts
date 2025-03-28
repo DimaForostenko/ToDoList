@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task } from './entities/task.entity';
+import { Task } from '../tasks/entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { UsersService } from '..//user/users.service';
@@ -22,7 +22,6 @@ export class TasksService {
       user,
     });
     const savedTask = await this.tasksRepository.save(task);
-    // Виключаємо пароль із відповіді
     delete savedTask.user.password;
     return savedTask;
   }
